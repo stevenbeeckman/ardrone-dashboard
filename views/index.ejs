@@ -1,0 +1,223 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Real-Time Dashboard</title>
+		<link rel='stylesheet' href='/bootstrap/css/bootstrap.min.css' />
+		<link rel="stylesheet" href="/css/rickshaw.min.css"/>
+		<script src="/js/jquery-1.9.1.min.js"></script>
+		<script src="/js/jquery.knob.js"></script>
+		<script src="/js/d3.v2.js"></script>
+		<script src="/js/rickshaw.min.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			$(document).ready(function(){
+				$("#throttle").knob();
+				$("#throttleHorizontal").knob();
+			});
+
+			var altitude = io.connect('http://localhost/altitude');
+			var altitude_data = new Array();
+			var altitude_graph;
+
+			altitude.on('connect', function(){
+				console.log("Connected to the altitude data stream.");
+				altitude.emit("Connected to the altitude data stream.");
+			});
+
+			altitude.on('altitude', function(data){
+				//console.dir(data);
+				$("#altitude").text(data.value);
+
+				altitude_data.push({x: (new Date()).getTime(), y: parseInt(data.value)});
+				if(!altitude_graph){
+					//console.log("Altitude graph doesn't yet exist, drawing it for the first and only time.");
+					altitude_graph = new Rickshaw.Graph( {
+					    element: document.querySelector("#altitude_chart"), 
+					    width: 80, 
+					    renderer: 'line',
+					    height: 60, 
+					    series: [{
+					        color: 'steelblue',
+					        data: altitude_data
+					    }]
+					});
+					altitude_graph.render();
+				}else{
+					//console.log("Altitude graph already exists.");
+					altitude_graph.series[0].data = altitude_data;
+					altitude_graph.render();
+				}
+			});
+
+			var throttle = io.connect('http://localhost/throttle_vertical');
+			var throttle_data = new Array();
+			var throttle_graph;
+
+			throttle.on('connect', function(){
+				//console.log("Connected to the throttle data stream.");
+				throttle.emit("Connected to the throttle data stream.");
+			});
+
+			throttle.on('throttle', function(data){
+				//console.dir(data);
+				$("#throttle").val(data.value);
+				$("#throttle").trigger("change"); // trigger the knob to redraw itself
+				throttle_data.push({x: (new Date()).getTime(), y: parseInt(data.value)});
+				if(!throttle_graph){
+					//console.log("Altitude graph doesn't yet exist, drawing it for the first and only time.");
+					throttle_graph = new Rickshaw.Graph( {
+					    element: document.querySelector("#throttle_chart"), 
+					    width: 80, 
+					    height: 60, 
+					    renderer: "line",
+					    interpolation: "step-after",
+					    series: [{
+					        color: '#66cc66',
+					        data: throttle_data
+					    }]
+					});
+					throttle_graph.render();
+				}else{
+					console.log("Altitude graph already exists.");
+					throttle_graph.series[0].data = throttle_data;
+					throttle_graph.render();
+				}
+			});
+
+			var throttleHorizontal = io.connect('http://localhost/throttle_horizontal');
+			var throttleHorizontal_data = new Array();
+			var throttleHorizontal_graph;
+
+			throttleHorizontal.on('connect', function(){
+				//console.log("Connected to the throttle data stream.");
+				throttleHorizontal.emit("Connected to the horizontal throttle data stream.");
+			});
+
+			throttleHorizontal.on('throttle', function(data){
+				//console.dir(data);
+				$("#throttleHorizontal").val(data.value);
+				$("#throttleHorizontal").trigger("change"); // trigger the knob to redraw itself
+				throttleHorizontal_data.push({x: (new Date()).getTime(), y: parseInt(data.value)});
+				if(!throttleHorizontal_graph){
+					//console.log("Altitude graph doesn't yet exist, drawing it for the first and only time.");
+					throttleHorizontal_graph = new Rickshaw.Graph( {
+					    element: document.querySelector("#throttleHorizontal_chart"), 
+					    width: 80, 
+					    height: 60, 
+					    renderer: "line",
+					    interpolation: "step-after",
+					    series: [{
+					        color: '#66cc66',
+					        data: throttleHorizontal_data
+					    }]
+					});
+					throttleHorizontal_graph.render();
+				}else{
+					//console.log("Throttle graph already exists.");
+					throttleHorizontal_graph.series[0].data = throttleHorizontal_data;
+					throttleHorizontal_graph.render();
+				}
+			});
+
+			var battery = io.connect('http://localhost/battery');
+			var battery_data = new Array();
+			var battery_graph;
+
+			battery.on('connect', function(){
+				console.log("Connected to the battery data stream.");
+				battery.emit("Connected to the battery data stream.");
+			});
+
+			battery.on('battery', function(data){
+				//console.dir(data);
+				$("#battery").text(data.value);
+
+				battery_data.push({x: (new Date()).getTime(), y: parseInt(data.value)});
+				if(!battery_graph){
+					battery_graph = new Rickshaw.Graph( {
+					    element: document.querySelector("#battery_chart"), 
+					    width: 80, 
+					    height: 60, 
+					    series: [{
+					        color: 'steelblue',
+					        data: battery_data
+					    }]
+					});
+					battery_graph.render();
+				}else{
+					battery_graph.series[0].data = battery_data;
+					battery_graph.render();
+				}
+			});
+		</script>
+	</head>
+	<body>
+		<div class="container-fluid">
+			<div class="hero-unit" style="height: 4em;">
+				<h1>Real-Time Dashboard</h1>
+				<p>You should see stuff moving below.</p>
+			</div>
+			<div class="row">
+				<div class="span4">
+					<h3>Altitude</h3>
+					<div class="span2" style="line-height:60px;">
+						<b>
+							<span id="altitude">No data</span> 
+						</b>
+					</div>
+					<div style="float: left;" id="altitude_chart">
+					</div>
+				</div>
+				<div class="span4">
+					<h3>Speed</h3>
+					<div class="span2" style="line-height:60px;">
+						<b>
+							<span id="speed">No data</span> 
+						</b>
+					</div>
+					<div style="float: left;" id="speed_chart">
+					</div>
+				</div>
+				<div class="span4">
+					<h3>Heading</h3>
+					<div class="span2" style="line-height:60px;">
+						<b>
+							<span id="heading">No data</span> 
+						</b>
+					</div>
+					<div style="float: left;" id="heading_chart">
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="span4">
+					<h3>Vertical Throttle</h3>
+					<div class="span2">
+						<input type="text" id="throttle" data-fgColor="#66cc66" data-min="-400" data-max="400" data-cursor=true data-angleOffset=-180 data-width="70" value="0" data-readOnly=true>
+					</div>
+					<div style="float: left;" id="throttle_chart">
+					</div>
+				</div>
+				<div class="span4">
+					<h3>Horizontal Throttle</h3>
+					<div class="span2">
+						<input type="text" id="throttleHorizontal" data-fgColor="#66cc66" data-min="-400" data-max="400" data-cursor=true data-angleOffset=-180 data-width="70" value="0" data-readOnly=true>
+					</div>
+					<div style="float: left;" id="throttleHorizontal_chart">
+					</div>
+				</div>
+				<div class="span4">
+					<h3>Battery</h3>
+					<div class="span2">
+						<b>
+							<span id="battery">No Data</span>
+						</b>
+					</div>
+					<div style="float: left;" id="battery_chart">
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
