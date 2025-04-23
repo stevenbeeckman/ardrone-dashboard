@@ -12,7 +12,7 @@
     "passport": "0.1.14",
     "passport-local": "0.1.6",
     "connect-mongo": "0.2.0",
-    "socket.io": "0.9.13"
+    "socket.io": "2.5.0"
   },
   "engines": {
         "node": ">= 0.6.19",
